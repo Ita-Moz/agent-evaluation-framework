@@ -1,0 +1,10 @@
+{
+  "agent": "claude",
+  "task": "example",
+  "passed": true,
+  "verifyExit": 0,
+  "agentExit": 0,
+  "attempts": 1,
+  "durationSec": 6,
+  "timestamp": "2026-11-18T16:59:20.532322+00:00"
+}

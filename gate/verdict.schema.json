@@ -1,0 +1,45 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://example.invalid/agent-framework/verdict.schema.json",
+  "title": "Reviewer verdict",
+  "type": "object",
+  "required": ["risk", "verdict", "confidence", "evidence", "issues", "unverified"],
+  "additionalProperties": false,
+  "properties": {
+    "risk": {
+      "type": "string",
+      "enum": ["low", "medium", "high"]
+    },
+    "verdict": {
+      "type": "string",
+      "enum": ["approve", "request_changes", "block"]
+    },
+    "confidence": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 10
+    },
+    "evidence": {
+      "type": "array",
+      "items": { "type": "string" },
+      "minItems": 1
+    },
+    "issues": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["severity", "location", "detail"],
+        "additionalProperties": false,
+        "properties": {
+          "severity": { "type": "string", "enum": ["bug", "security", "perf", "design", "test-gap"] },
+          "location": { "type": "string" },
+          "detail": { "type": "string" }
+        }
+      }
+    },
+    "unverified": {
+      "type": "array",
+      "items": { "type": "string" }
+    }
+  }
+}

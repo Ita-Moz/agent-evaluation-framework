@@ -1,0 +1,62 @@
+# Agent-agnostic quality gate (GitHub Actions).
+#
+# The model review runs OUTSIDE this workflow (any agent: Claude Code, Codex,
+# DeepSeek, ...). Its verdict is committed as `review/verdict.json` on the PR
+# branch. This workflow is deterministic: it re-runs tests, classifies risk,
+# and decides whether to auto-merge — never via a model.
+#
+# Prerequisites:
+#   - Copy classify.py, decide.py, verdict.schema.json into .agent-framework/gate/
+#   - Replace the deterministic-checks step with your real test/lint/build.
+#   - Branch protection on main: require `deterministic-checks`; enable
+#     "Allow auto-merge"; require 1 review (for the human-escalation path).
+#   - Fine-grained PAT in secrets.GH_TOKEN (contents: read, pull-requests: write).
+name: agent-gate
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  deterministic-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # TODO: replace with your stack's setup + lint + typecheck + build + test.
+      - name: Tests, lint, build (deterministic)
+        run: |
+          echo "Replace this step with your repository's checks."
+
+  gate:
+    needs: deterministic-checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Classify risk tier (deterministic)
+        id: classify
+        run: |
+          python3 .agent-framework/gate/classify.py | tee /tmp/classify.out
+          tier="$(grep '^TIER=' /tmp/classify.out | cut -d= -f2)"
+          echo "tier=$tier" >> "$GITHUB_OUTPUT"
+          echo "risk tier = $tier"
+
+      - name: Decide merge (deterministic)
+        env:
+          TIER: ${{ steps.classify.outputs.tier }}
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          VERDICT_PATH: review/verdict.json
+        run: python3 .agent-framework/gate/decide.py | tee /tmp/decide.out
+
+      # Optional: label/comment for human escalation and change requests.
+      - name: Report decision
+        run: |
+          decision="$(grep '^DECISION=' /tmp/decide.out | cut -d= -f2)"
+          echo "gate decision = ${decision:-unknown}"
+          # TODO: add a label/comment via `gh` for request_changes / request_human.

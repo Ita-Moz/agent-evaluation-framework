@@ -1,0 +1,6 @@
+{
+  "bugs": [
+    { "id": "B1", "severity": "bug", "location": "app.py:3", "detail": "range(len(items)-1) skips the last element (off-by-one)" },
+    { "id": "B2", "severity": "security", "location": "app.py:8", "detail": "eval() executes untrusted input" }
+  ]
+}
